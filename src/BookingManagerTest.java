@@ -1,4 +1,3 @@
-// BookingManagerTest.java
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,34 +12,35 @@ public class BookingManagerTest {
 
     @Test
     public void testBookTicketSuccessfully() {
-        assertDoesNotThrow(() -> manager.bookTicket("Alice", "Boston", "12"));
+        Bus availableBus = manager.getFleet().get(0);
+        assertDoesNotThrow(() -> manager.bookTicket("Alice", availableBus, "New York", "Boston", "12"));
         assertEquals(1, manager.getBookedTickets().size());
-        assertEquals(12, manager.getBookedTickets().get(0).getSeatNumber());
+        assertEquals("101", manager.getBookedTickets().get(0).getBusId());
     }
 
     @Test
-    public void testEmptyNameThrowsException() {
-        Exception exception = assertThrows(InvalidBookingException.class, () -> {
-            manager.bookTicket("", "New York", "5");
+    public void testBusUnavailableExceptionThrown() {
+        Bus fullBus = manager.getFleet().get(1);
+        Exception exception = assertThrows(BusUnavailableException.class, () -> {
+            manager.bookTicket("Bob", fullBus, "New York", "Boston", "1");
         });
-        assertEquals("Passenger name cannot be empty.", exception.getMessage());
+        assertEquals("Bus 102 is completely full.", exception.getMessage());
     }
 
     @Test
-    public void testDuplicateSeatThrowsException() {
-        assertDoesNotThrow(() -> manager.bookTicket("Alice", "Boston", "15"));
-        
+    public void testSameDepartureAndDestinationThrowsException() {
+        Bus availableBus = manager.getFleet().get(0);
         Exception exception = assertThrows(InvalidBookingException.class, () -> {
-            manager.bookTicket("Bob", "Chicago", "15");
+            manager.bookTicket("David", availableBus, "Boston", "Boston", "8");
         });
-        assertEquals("Seat 15 is already booked.", exception.getMessage());
+        assertEquals("Departure and Destination cannot be the same.", exception.getMessage());
     }
-    
+
     @Test
-    public void testInvalidSeatFormatThrowsException() {
+    public void testSaveEmptyBookingsThrowsException() {
         Exception exception = assertThrows(InvalidBookingException.class, () -> {
-            manager.bookTicket("Charlie", "Washington D.C.", "ABC");
+            manager.saveBookingsToFile("test.txt");
         });
-        assertEquals("Seat number must be a valid integer.", exception.getMessage());
+        assertEquals("No tickets have been booked yet.", exception.getMessage());
     }
 }
